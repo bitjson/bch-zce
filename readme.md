@@ -103,7 +103,7 @@ Many exchanges, payment processors, ATM operators, and other services have begun
 
 Proper network monitoring infrastructure is non-trivial to setup and maintain, making safe, self-hosted, zero-confirmation transaction acceptance systems more expensive and less practical for many businesses. Because monitoring services must be widely-connected, they also place a higher bandwidth burden on the network than nodes with fewer connections. While [DSPs](https://documentation.cash/protocol/network/messages/dsproof-beta) reduce the cost of this infrastructure, they do not eliminate the need for active network monitoring after a transaction is received.
 
-ZCEs completely eliminate the need for network monitoring after a transaction is received. **ZCE-secured transactions can be validated by a sporadically-connected local node**, and ZCE security does not rely upon merchants hearing the broadcast of a DSPs.
+ZCEs completely eliminate the need for network monitoring after a transaction is received. **ZCE-secured transactions can be validated by a sporadically-connected local node**, and ZCE security does not rely upon merchants hearing the broadcast of a DSP.
 
 ### Business Certainty
 
@@ -805,7 +805,7 @@ Wallets creating ZCE-secured transactions must implement the following UTXO sele
 
 <small>
 
-1. The ZCE contract allows anyone (typically, the miner) to spend the ZCE output if the spender can prove two different messages have been signed by the same public key. If a ZCE includes two UTXOs which pay to the same public key hash (A.K.A. address), the ZCE can be immediately claimed using only the signatures provided in the transaction's inputs. ([Future upgrades](#future-upgrade-eliminating-utxo-uniqueness-limitation) could enable ZCEs to safely use multiple UTXOs per address.)
+1. The ZCE contract allows anyone (typically, the miner) to spend the ZCE output if the spender can prove two different messages have been signed by the same public key. If a ZCE includes two UTXOs which pay to the same public key hash (A.K.A. address), the ZCE can be immediately claimed using only the signatures provided in the transaction's inputs. ([Future upgrades](#eliminating-one-utxo-per-address-limitation) could enable ZCEs to safely use multiple UTXOs per address.)
 2. This prevents the ZCE from being inadvertently lost by broadcasting later transactions with signatures which also match the ZCE's miner claim criteria. Additionally, because ZCEs offer bounties for miners which are often much larger than typical transaction fees, at least 11 confirmations are necessary to avoid incentivizing blockchain rewrites: if a large enough volume of ZCE-secured transactions have had their miner claim criteria quickly revealed, it can become profitable for miners to attempt deep block reorganizations to claim ZCEs. This window of opportunity closes after the 10-block rolling checkpoint is reached, preventing deep block-reorganizations from being accepted by the network.
 3. To fulfill a payment request's [`instantAcceptanceEscrow` requirement](#payment-request), the ZCE output must be greater than or equal to the `instantAcceptanceEscrow` value in satoshis plus the transaction's miner fee.
 
