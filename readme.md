@@ -5,6 +5,7 @@
         Layer: Peer Services
         Authors: Jason Dreyzehner, Marty Alcala
         Status: Draft
+        Specification Version: 1.0.0
         Initial Publication Date: 2021-08-18
         Latest Revision Date: 2021-08-18
 
@@ -1030,6 +1031,13 @@ _(TODO, pull requests welcome)_
 ## Feedback & Reviews
 
 - [`CHIP 2021-06 Zero-Confirmation Escrows` - Bitcoin Cash Research](https://bitcoincashresearch.org/t/)
+
+## Changelog
+
+This section summarizes the evolution of this document.
+
+- **v1.0.0 – 2021-8-18** ([`053927b5`](https://github.com/bitjson/bch-zce/blob/053927b57b5c7fe9f70e2dd77242e84c507d3502/readme.md))
+  - Initial publication
 
 ## Copyright
 
