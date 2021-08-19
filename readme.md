@@ -11,25 +11,17 @@
 
 ## Summary
 
-This proposal introduces a set of Zero-Confirmation Escrow (ZCE) contracts, protocols, and transaction relay and mining polices which improve the speed and security of unconfirmed transactions on Bitcoin Cash.
+This proposal introduces a set of Zero-Confirmation Escrow (ZCE) contracts, a payment protocol extension, and transaction relay and mining polices which enable instant, incentive-secure transactions on Bitcoin Cash.
 
 ## Deployment
 
-Deployment of this specification does not require network coordination, though sufficient deployment is required before ZCE-secured transactions can be safely accepted as final.
+Deployment of this specification does not require network coordination, though sufficient deployment, per the payee's risk profile, is required before ZCE-secured transactions can be safely accepted by the payee as final.
 
-ZCE transaction relay & mining policies are recommended for deployment in the November 2021 upgrade.
+ZCE transaction relay & mining policies are proposed for deployment in November 2021.
 
 ## Background & Motivation
 
-The Bitcoin Cash ecosystem makes significant use of **zero-confirmation transactions** – transactions which have not yet been included in a block.
-
-As BCH block sizes are limited well-beyond typical network throughput, practically all transactions are included in the next block after their initial broadcast. Additionally, a widely-deployed "first-seen" network relay rule ensures that honest nodes refuse to relay or mine transactions which conflict with any already-seen transactions. These properties make unconfirmed BCH transactions reliable enough for many applications, provided precautions are taken to mitigate the risk of payment fraud.
-
-### Existing Risk-Reduction Strategies
-
-**Payment fraud** on BCH is most likely to occur before a transaction has been included in a block<sup>1</sup>. When the payee receives a zero-confirmation transaction which they expect to be confirmed in the next block, they release the products/services to the payer. However, when the next block is mined, the payee finds that a conflicting transaction has been included rather than the expected transaction; **the payee never receives the expected payment despite having already released the products/services**.
-
-Depending on the specific application, payees can utilize a number of existing strategies to reduce the risk of payment fraud.
+**Payment fraud** on BCH is most likely to occur before a transaction has been included in a block<sup>1</sup>. When the payee receives a transaction which they expect to be confirmed in the next block, they release the products/services to the payer. However, when the next block is mined, the payee finds that a conflicting transaction has been included rather than the expected transaction; **the payee never receives the expected payment despite having already released the products/services**.
 
 <small>
 
@@ -37,15 +29,23 @@ Depending on the specific application, payees can utilize a number of existing s
 
 </small>
 
+### Existing Risk-Reduction Strategies
+
+The Bitcoin Cash ecosystem makes significant use of **zero-confirmation transactions** – transactions which have not yet been included in a block. (When a transaction is included in a block, the transaction is said to have one confirmation. Each successive block is considered to add to the transaction's total confirmations.)
+
+As BCH block size limits are well-beyond typical network throughput, practically all transactions are included in the next block after their initial broadcast. Additionally, a widely-deployed "first-seen" transaction relay rule ensures that honest nodes refuse to relay or mine transactions which conflict with any already-seen transactions. These properties make the existing state of zero-confirmation BCH transactions reliable enough for many applications, provided precautions are taken to mitigate the risk of payment fraud.
+
+Depending on the specific application, payees can utilize a number of risk-reduction strategies.
+
 #### Transaction Conflict Monitoring
 
-By listening for conflicting transactions on the network for 5 to 10 seconds prior to considering a payment final, payees can significantly reduce the risk of a payment being fraudulently reversed<sup>2</sup>. To monitor the network, payment service providers maintain sets of widely-connected nodes which are more likely to receive a broadcast of a conflicting payment.
+By listening for conflicting transactions on the network for 5 to 10 seconds prior to considering a payment final, payees can significantly reduce the risk of a payment being fraudulently reversed<sup>1</sup>. To monitor the network, payment service providers maintain sets of widely-connected nodes, increasing the likelihood that they will receive any broadcasts of conflicting payments.
 
-A new protocol message type, the [Double Spend Proof (DSP)](https://documentation.cash/protocol/network/messages/dsproof-beta), is also being widely-tested and deployed to help propagate knowledge of conflicting transactions (without assisting in the propagation of the conflicting transactions themselves).
+A new protocol message type – the [Double Spend Proof (DSP)](https://documentation.cash/protocol/network/messages/dsproof-beta) – is also being deployed to help propagate knowledge of conflicting transactions (without assisting in the propagation of the conflicting transactions themselves).
 
 <small>
 
-2. [Testing on BCH in 2018](https://www.youtube.com/watch?v=TIt96gFh4vw) indicated that attack success probability falls below 1% after only 2 seconds, and less than 0.1% at 3 seconds. Even for sophisticated attacks with a high-fee replacement transaction delivered by a network of well-connected nodes, after a 5 second delay, attacks had only a 5% success probability.
+1. [Testing on BCH in 2018](https://www.youtube.com/watch?v=TIt96gFh4vw) revealed that equal-fee attack success probability falls below 1% after only 2 seconds, and less than 0.1% at 3 seconds, indicating that almost all mining nodes reliably receive broadcasted transactions within 3 seconds. (And even sophisticated attacks with a high-fee replacement transaction delivered by a network of well-connected nodes had only a 5% success probability at 5 seconds.)
 
 </small>
 
@@ -57,37 +57,37 @@ Payees can also limit fraud risk by placing upper limits on the individual payme
 
 In many cases, payees can reduce or eliminate payment fraud risk by maintaining reversibility until unconfirmed transactions are included in a block. For example, some digital subscriptions can be canceled within a few minutes or hours with little cost to the business.
 
-This strategy can also be employed by payees who deliver goods after a delay, such as e-commerce merchants – orders paid by fraudulently-reversed payments can be canceled before fulfillment or delivery.
+This strategy can also be employed by payees who deliver goods after a delay, such as e-commerce merchants: orders paid by fraudulently-reversed payments can be canceled before fulfillment or delivery.
 
 #### External Dispute Resolution
 
-Finally, external dispute resolution systems can both dissuade attacks and help to recuperate lost funds and stolen merchandise.
+Finally, external dispute resolution systems can both dissuade attacks and help to recuperate lost funds or stolen merchandise.
 
-By requiring and validating customer identity information, merchants can ensure they have methods of recourse in the case of a successful attack. Businesses with ongoing relationships can suspend accounts and ban customers which attempt to defraud them. If an attacker is successful, payees can pursue restitution via debt collection, credit, arbitration, and/or state-run legal systems.
+By requiring and validating customer identity information, merchants can ensure they have methods of recourse in the case of a successful attack. Businesses with ongoing relationships can suspend accounts and ban customers who attempt to defraud them. If an attacker is successful, payees can pursue restitution via debt collection, credit, arbitration, and/or state-run legal systems.
 
 ## Benefits
 
-**Zero-Confirmation Escrows** (ZCEs) enable instant, secure BCH payments, particularly in point-of-sale, ATM, and vending applications where payers have no prior or ongoing relationship with the payee.
+**Zero-Confirmation Escrows** (ZCEs) enable instant, secure BCH payments, particularly in retail, point-of-sale, ATM, and vending applications where payers have no prior or ongoing relationship with the payee.
 
 ### Instant Payments
 
-Because non-ZCE payments can only be considered reasonably secure after a short delay for network monitoring, secure in-person BCH payment systems often seem slow. Even delays of 5-10 seconds make a payment experience non-competitive with centralized digital payment methods (e.g. tap-to-pay devices or credit cards).
+Because non-ZCE payments can only be considered reasonably secure after a 5-10 second delay for network monitoring, in-person BCH payment systems often seem slow. Even such short delays can make a payment experience non-competitive with centralized digital payment methods (e.g. tap-to-pay devices or credit cards).
 
-Payment acceptance systems which hide this delay by immediately displaying a success state risk bad merchant experiences (higher fraud rates, particularly against new or inadequately-trained employees) and higher employee training costs.
+Payment acceptance systems that hide this delay by immediately displaying a success state risk bad merchant experiences (higher fraud rates, particularly against new or inadequately-trained employees) and higher employee training costs.
 
 **Zero-Confirmation Escrows eliminate this network monitoring delay**, allowing payees to instantly validate and accept ZCE-secured transactions as final. Because ZCEs can be validated by a local node, **ZCE-secured payments can provide faster user experiences than centralized payment systems** (which require a round-trip communication between the point-of-sale and a bank or centralized payment processor).
 
 ### Long-Term Security
 
-The presently-low risk of accepting zero-confirmation transactions is predicated on a common but unenforceable norm: the "first-seen" transaction mining policy. Because miners which do not follow this policy cannot be conclusively identified and punished by other network actors – and BCH is not the only SHA256-based chain on which miners can operate – the current behavior can only be considered stable while the "defraudable" volume of zero-confirmation commerce is less than the expected value of each block coinbase<sup>3</sup>.
+The presently-low risk of accepting zero-confirmation transactions is predicated on a common but unenforceable norm: the "first-seen" transaction mining policy. Because miners who do not follow this policy cannot be conclusively identified and punished by other network actors – and BCH is not the only SHA256-based chain on which miners can operate – the current behavior can only be considered stable while the "defraudable" volume of zero-confirmation commerce is less than the expected value of each block coinbase<sup>1</sup>.
 
-As block subsidies continue to be replaced by transaction fees and zero-confirmation commerce volume increases, the expected profitability of attack infrastructure may rise significantly. Unscrupulous mining pools could augment their income by offering zero-confirmation transaction reversal services which circumvent network monitoring strategies and occasionally succeed at reversing transactions approximately 10 minutes later.
+As block subsidies continue to be replaced by transaction fees and zero-confirmation commerce volume increases, the expected profitability of attack infrastructure may rise significantly. Unscrupulous mining pools could augment their income by offering zero-confirmation transaction reversal services which circumvent network monitoring strategies and occasionally succeed at reversing non-ZCE transactions approximately 10 minutes later.
 
-ZCEs remain incentive-secure against this category of attacks, even as zero-confirmation commerce volume increases. With adequate escrow values, **ZCE-secured transactions can be accepted with the same finality as 1-confirmation transactions**.
+ZCEs remain incentive-secure against this category of attacks, even as zero-confirmation commerce volume increases. With adequate escrow values, **ZCE-secured transactions can be accepted with the same finality as single-confirmation transactions**.
 
 <small>
 
-1. Even "hostile" miners have a temporary incentive to maintain the value of BCH (including as a fast, secure payment system): each block coinbase can only be moved after 100 additional blocks have been mined beyond it. As such, a rational miner with no other attachment to BCH would only find it desirable to offer "fraud-as-a-service" if the expected returns (possibly paid in another currency) were greater than the expected depreciation of any BCH mined (plus the implementation and maintenance cost of attack infrastructure).
+1. Even "hostile" miners have a temporary incentive to maintain the value of BCH (including as a fast, secure payment system): each block coinbase can only be moved after 100 additional blocks have been mined beyond it. As such, a rational miner with no other attachment to BCH would only find it desirable to offer "fraud-as-a-service" if the expected returns were greater than the expected depreciation of any BCH mined (plus the implementation and maintenance cost of attack infrastructure).
 
 </small>
 
@@ -95,7 +95,7 @@ ZCEs remain incentive-secure against this category of attacks, even as zero-conf
 
 By relying heavily on [external dispute resolution](#external-dispute-resolution) for zero-confirmation payment fraud, BCH currently incentivizes many businesses to implement identity verification in order to accept zero-confirmation transactions.
 
-Many exchanges, payment processors, ATM operators, and other services have begun collecting customer identity information, even in markets where legal and regulatory regimes do not require such behavior. This seems to indicate that these businesses find the risk-mitigation (and other added value) of collecting identity information outweighs financial privacy-related losses.
+Many exchanges, payment processors, ATM operators, and other services have begun collecting customer identity information, even in markets where legal and regulatory regimes do not require such behavior. This indicates that these businesses find that the risk-mitigation (and customer relationship development opportunities) of collecting identity information outweighs the slower user experiences and financial privacy loss incurred.
 
 **ZCEs offer instant finality and an automatic response in the case of fraud**. By avoiding the need to collect identity information, ZCEs can improve customer privacy and reduce business risks due to data breaches.
 
@@ -117,18 +117,18 @@ The following costs and risks have been assessed.
 
 ### Increased Transaction Sizes
 
-ZCE-secured transactions include an additional output which must be reclaimed in a later transaction. Together, these add an average overhead of 295 bytes<sup>1</sup>.
-
-While this slightly increases the cost of transactions using ZCEs (by ~$0.001 in 2020 USD), many users are likely willing to pay such a premium to avoid a ~10 minute delay for transaction confirmations. Even for users making hundreds of payments a month, this additional cost should amount to less than $1 per year (2020 USD). Many users are likely willing to pay this price even to avoid 5-10 second network monitoring delays with merchants who currently accept higher-risk, non-escrowed payments.
-
-While ZCEs are likely to increase the total blockchain space consumed by point-of-sale and other zero-confirmation transactions, for comparison, the additional cost of ZCEs is similar to the overhead of multisignature wallet security or proper use of [CashFusion](https://cashfusion.org/).
+ZCE-secured transactions include an additional output which must be reclaimed in a later transaction. Together, these add an average overhead of 295 bytes.
 
 <details>
 <summary>Calculations</summary>
 
-1. ZCE-secured transaction includes a ZCE P2SH output (32 bytes), an additional reclaim transaction requires X bytes: ZCE reclaim input overhead (36-byte outpoint, 4-byte sequence number, 1-byte bytecode length), ZCE reclaim input unlocking bytecode (100 bytes), ZCE reclaim input redeem bytecode (63 bytes for single input, 71 bytes for 1-level merkle tree, 78 bytes for 2-level merkle tree, 85 bytes for 3-level merkle tree, ..., 177 bytes for 16-level merkle tree), other reclaim transaction overhead (4-byte version, ~2-byte input/output counts, 34-byte P2PKH output, 4-byte locktime). Total without redeem bytecode: `32 + 36 + 4 + 1 + 100 + 4 + 2 + 34 + 4 ~= 217`. Total for 1 input: `217 + 63 = 280`, 2 inputs: `217 + 71 = 288`, 4 inputs: `217 + 78 = 295`, 8 inputs: `217 + 85 = 302`, 65,536 inputs: `217 + 177 = 394`. As of May 2021, average input count of transactions is ~3; average expected overhead is 295 bytes. Minimum overhead is 280 bytes; maximum overhead is 394 bytes.
+ZCE-secured transactions include a ZCE P2SH output (32 bytes), an additional reclaim transaction requires X bytes: ZCE reclaim input overhead (36-byte outpoint, 4-byte sequence number, 1-byte bytecode length), ZCE reclaim input unlocking bytecode (100 bytes), ZCE reclaim input redeem bytecode (63 bytes for single input, 71 bytes for 1-level merkle tree, 78 bytes for 2-level merkle tree, 85 bytes for 3-level merkle tree, ..., 177 bytes for 16-level merkle tree), other reclaim transaction overhead (4-byte version, ~2-byte input/output counts, 34-byte P2PKH output, 4-byte locktime). Total without redeem bytecode: `32 + 36 + 4 + 1 + 100 + 4 + 2 + 34 + 4 ~= 217`. Total for 1 input: `217 + 63 = 280`, 2 inputs: `217 + 71 = 288`, 3-4 inputs: `217 + 78 = 295`, 5-8 inputs: `217 + 85 = 302`, 32,769-65,536 inputs: `217 + 176 = 393`. As of May 2021, average input count of transactions is ~3; average expected overhead is 295 bytes. Minimum overhead is 280 bytes; maximum overhead is 393 bytes.
 
 </details>
+
+While this slightly increases the cost of transactions using ZCEs (by ~$0.001 in 2020 USD), many users are likely willing to pay such a premium to avoid a ~10 minute delay for transaction confirmations. Even for users making hundreds of payments a month, this additional cost should amount to less than $1 per year (2020 USD). Many users are likely willing to pay this price even to avoid 5-10 second network monitoring delays with merchants who currently accept higher-risk, non-escrowed payments.
+
+While ZCEs are likely to increase the total blockchain space consumed by point-of-sale and other zero-confirmation transactions, for comparison, the additional cost of ZCEs is similar to the overhead of multisignature wallet security or proper use of [CashFusion](https://cashfusion.org/).
 
 ### Modification to Transaction Acceptance/Relay
 
@@ -154,7 +154,7 @@ A standard Zero-Confirmation Escrow (ZCE) contract type and validation strategy 
 
 ### Technical Summary
 
-Zero-Confirmation Escrows are a standardized contract with which a payer can guarantee that a payment will not be invalidated by a double-spend, allowing the payment to be accepted with confidence similar to a single confirmation (as if the transaction were included in the most recently mined block).
+Zero-Confirmation Escrows are a standardized contract which guarantees that a payment will not be invalidated by a double-spend, allowing the payment to be accepted with confidence similar to a single confirmation (as if the transaction were included in the most recently mined block).
 
 To make a ZCE-secured payment, the payer computes the proper P2SH ZCE output for the inputs used in a transaction, allocating at least a minimum value (as required by the payee) to the output. In a following transaction, the payer immediately reclaims the ZCE output back to their wallet, exposing the P2SH redeem bytecode as a valid ZCE contract. Because ZCE-secured transactions use a modified transaction relay and mining policy, the ZCE-secured transaction can be safely accepted immediately without a delay for network monitoring.
 
@@ -752,12 +752,12 @@ OP_ENDIF
 
 #### ZCE Root Hash
 
-Every ZCE-Secured Transaction has exactly one (`1`) valid **ZCE Root Hash**, the root hash of a `HASH160` merkle tree containing all public keys which must be covered by the ZCE (See [ZCE-Secured Transactions](#zce-secured-transactions)).
+Every ZCE-Secured Transaction has exactly one (`1`) valid **ZCE Root Hash**, the root hash of a `HASH160` merkle tree containing all public keys required by the ZCE (See [ZCE-Secured Transactions](#zce-secured-transactions)).
 
 For a ZCE to be considered valid, the merkle tree must be no deeper than `16` levels (allowing ZCE outputs to cover up to `65,536` public keys). Each public key in the tree must be unique and appear in lexicographical order. Unused tree leaves must appear after all covered public keys, and each unused leaf must be set to `0`.
 
 <details>
- <summary>Root Hash Test Vectors</summary>
+ <summary>ZCE Root Hash Test Vectors</summary>
 
 The following public key sets (ordered lexicographically) produce the indicated root hash. For each test vector, a script is provided to demonstrate correct merkle tree construction. (Note, for ZCE outputs covering only one public key, no merkle tree is required.)
 
@@ -805,7 +805,7 @@ Wallets creating ZCE-secured transactions must implement the following UTXO sele
 
 <small>
 
-1. The ZCE contract allows anyone (typically, the miner) to spend the ZCE output if the spender can prove two different messages have been signed by the same public key. If a ZCE includes two UTXOs which pay to the same public key hash (A.K.A. address), the ZCE can be immediately claimed using only the signatures provided in the transaction's inputs. ([Future upgrades](#eliminating-one-utxo-per-address-limitation) could enable ZCEs to safely use multiple UTXOs per address.)
+1. The ZCE contract allows anyone (typically, the miner) to spend the ZCE output if they can prove two different messages have been signed by the same public key. If a ZCE includes two UTXOs which pay to the same public key hash (A.K.A. address), the ZCE can be immediately claimed using only the signatures provided in the transaction's inputs. ([Future upgrades](#eliminating-one-utxo-per-address-limitation) could enable ZCEs to safely use multiple UTXOs per address.)
 2. This prevents the ZCE from being inadvertently lost by broadcasting later transactions with signatures which also match the ZCE's miner claim criteria. Additionally, because ZCEs offer bounties for miners which are often much larger than typical transaction fees, at least 11 confirmations are necessary to avoid incentivizing blockchain rewrites: if a large enough volume of ZCE-secured transactions have had their miner claim criteria quickly revealed, it can become profitable for miners to attempt deep block reorganizations to claim ZCEs. This window of opportunity closes after the 10-block rolling checkpoint is reached, preventing deep block-reorganizations from being accepted by the network.
 3. To fulfill a payment request's [`instantAcceptanceEscrow` requirement](#payment-request), the ZCE output must be greater than or equal to the `instantAcceptanceEscrow` value in satoshis plus the transaction's miner fee.
 
@@ -919,22 +919,17 @@ Upon receipt of the [`Payment` message](#payment), the payee must:
 
 If the broadcast is successful, the payment can be considered ZCE-secured.
 
-<small>
+<details>
+<summary>Notes</summary>
 
 1. Even if the conflicting transaction were broadcasted less than 5 seconds before the ZCE-secured transaction was received, it could not be guaranteed that the entire network would hear the ZCE-secured transaction in time to replace the conflicting transaction, and the double-spend could be successful. As such, payees should not ignore this attempted fraud.
 2. While ZCEs [generally prevent attackers from profiting](#full-value-escrow-requirement) via zero-confirmation fraud, a well-funded attacker can vandalize a business by simultaneously broadcasting a conflicting ZCE-secured transaction – paying back to the attacker – with an equal or greater escrow value than the transaction sent to the business. This attack is guaranteed to lose the attacker at least the value of the payment (due to miners claiming the ZCE), and may be detected by the business before the double-spent payment is honored (the attack can always be [detected within 5 seconds](#monitoring-for-replacement-transactions)). The attack also risks a 200% loss to the attacker if a miner ultimately accepts the legitimate transaction (in which case, the business still receives their expected payment).
 
-</small>
+</details>
 
 ## Rationale
 
 This section documents design decisions made in this specification.
-
-### Transaction Replacement Period
-
-The [5 second transaction replacement period](#zce-relay--mining-policies) is chosen based on [existing usage and real-world testing](#transaction-conflict-monitoring). Because 1) all mining nodes appear to hear transactions in less than 3 seconds, 2) the network can be relied upon to accept ZCE-secured transaction replacements for around 5 seconds, and 3) payees delay any transactions with a previously-seen conflict, the replacement period offers immediate confidence in any valid ZCE-secured transaction.
-
-Additionally, existing payment processors and point-of-sale packages typically monitor the network for 5 to 10 seconds before accepting a zero-confirmation transaction. By only allowing replacement within a 5 second window, the security of existing systems is not reduced.
 
 ### Full-Value Escrow Requirement
 
@@ -944,7 +939,7 @@ Partial-value and non-escrowed zero-confirmation commerce incentivizes the devel
 
 Because mining is highly competitive, additional income from this sort of "fraud-as-a-service" agreement<sup>2</sup> could become a serious competitive advantage, particularly as transaction fees continue their growth as a proportion of block rewards.
 
-By requiring full-value escrows, this proposal introduces significant friction between buyers and sellers of fraud-as-a-service mining: attackers are motivated to pay less than 100% of the purchase price, but any discount offered by a fraud-assisting miner would earn the miner less than their profit to betray the attacker (by mining the ZCE-secured transaction). Though such miners could successfully operate on reputation, the development and growth of such pools remains regulated by exit scam risk (attackers risk 200% of each payment for the chance at a discount)<sup>3</sup>.
+By requiring full-value escrows, this proposal introduces significant friction between buyers and sellers of fraud-as-a-service mining: attackers are motivated to pay less than 100% of the purchase price, but any discount offered by a fraud-assisting miner would earn the miner less than betraying the attacker (by mining the ZCE-secured transaction). Though such miners could successfully operate on reputation, the development and growth of such pools remains regulated by exit scam risk (attackers risk 200% of each payment for the chance at a discount)<sup>3</sup>.
 
 Finally, it should be noted that the full-value escrow requirement does not interfere with typical wallet usage: it is uncommon for buyers to spend more than half of a wallet or account balance in any single point-of-sale transaction. Larger expenditures (e.g. rent, mortgage, utility bills, service invoices, insurance premiums, etc.) tend to allow for larger payment windows than retail settings and can wait for transactions to be confirmed in a block rather than employing ZCEs.
 
@@ -956,15 +951,23 @@ Finally, it should be noted that the full-value escrow requirement does not inte
 
 </small>
 
+### Transaction Replacement Period
+
+The [5 second transaction replacement period](#zce-relay--mining-policies) is chosen based on [existing usage and real-world testing](#transaction-conflict-monitoring). Because 1) all mining nodes appear to hear transactions in less than 3 seconds, 2) the network can be relied upon to accept ZCE-secured transaction replacements for around 5 seconds, and 3) payees delay any transactions with a previously-seen conflict, the replacement period offers immediate confidence in any valid ZCE-secured transaction.
+
+Additionally, existing payment processors and point-of-sale packages typically monitor the network for 5 to 10 seconds before accepting a zero-confirmation transaction. By only allowing replacement within a 5 second window, the security of existing systems is not reduced.
+
 ### Monitoring for Replacement Transactions
 
 Because ZCE-secured transactions can be replaced for up to 5 seconds, the theoretical cost of fraud rises 5 seconds after an initial ZCE-secured transaction is broadcasted.
 
 For example: an attacker makes a $5 purchase which is secured by a $5 ZCE. Within 5 seconds of the initial broadcast, the attacker can broadcast a conflicting ZCE-secured transaction secured by a $5.01 ZCE which pays funds back to their own wallet. (This fraud costs the attacker slightly more than the original $5 payment, but the attacker may have non-monetary motives.)
 
-After 5 seconds, when ZCE replacement over the network is no longer possible, the maximum cost of fraud to the attacker rises to $10 (the original payment + ZCE) – while fraud-as-a-service mining pools could offer a chance at a discount from the $5 payment, the attacker always risks $10 by sharing a double spend with a mining pool.
+After 5 seconds, when ZCE replacement over the network is no longer possible, the maximum cost of fraud to the attacker rises to $10 (the original payment + ZCE) – while fraud-as-a-service mining pools could offer a chance<sup>1</sup> at a discount from the $5 payment, the attacker always risks $10 by sharing a double spend with a mining pool.
 
 This property offers another simple strategy for improving ZCE transaction security: payees could monitor the network for ~5 seconds prior to releasing goods, ensuring attackers are always forced to pay the higher cost. This mode is excluded from the specification because it re-introduces a waiting period for users, harming user experience. Security is likely better improved by increasing `instantAcceptanceEscrow`, but some rare use cases may both require additional security and find the additional delay preferable to increasing escrow values.
+
+1. Attacks are only successful if the colluding miner finds the network's next block. This occurs with a probability equal to the colluding miner's portion of network hash power.
 
 ### Limitation on Immediate Reuse of Escrowed Funds
 
@@ -1021,8 +1024,8 @@ No alternative proposals are currently active, but several past proposals have i
 
 Other potential alternatives which have been proposed for networks like Bitcoin Cash include:
 
-- [Lightning Network](https://en.wikipedia.org/wiki/Lightning_Network) – a payment channel network which offers similar finality as ZCE-secured transactions (but requires previous setup transactions, channel liquidity between payer and payee, and a constantly-online service to monitor for fraud).
-- [Avalanche](https://www.avalabs.org/whitepapers) – a secondary consensus layer in which a set of recent miners settles disputes between conflicting transactions. (Though no public proposal exists for applying the Avalanche protocol to a bitcoin-like Proof-of-Work network.)
+- [Lightning Network](https://en.wikipedia.org/wiki/Lightning_Network) – a payment channel network which offers similar finality as ZCE-secured transactions, but requires previous setup transactions, channel liquidity between payer and payee, and a constantly-online service to monitor for fraud.
+- [Avalanche](https://www.avalabs.org/whitepapers) – a secondary consensus layer in which a set of recent miners settles disputes between conflicting transactions; though no public proposal exists for applying the Avalanche protocol to a bitcoin-like Proof-of-Work network.
 
 ## Stakeholders & Statements
 
