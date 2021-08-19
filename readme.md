@@ -810,7 +810,7 @@ Wallets creating ZCE-secured transactions must implement the following UTXO sele
 
 </small>
 
-### ZCE Extension to JSON Payment Protocol (v2)
+### ZCE Extension to JSON Payment Protocol
 
 The [JSON Payment Protocol (v2)](https://github.com/bitpay/jsonPaymentProtocol/blob/24014a7d29a0fac8a47523843aaafd5b7e07b901/v2/specification.md) is extended to enable ZCE-secured payments to be requested and returned.
 
@@ -872,8 +872,6 @@ The `escrowReclaimTx` field must contain a transaction in which the ZCE output i
 
 The `escrowReclaimTx` field is required for a payee to instantly accept a ZCE-secured transaction – by broadcasting the reclaim transaction at the same time as the ZCE-secured transaction, the network is alerted to the existence and `reclaim` public key of the ZCE output. If not provided, the payee should not accept the transaction as a ZCE-secured payment.
 
-Upon receipt, the payee must immediately attempt to broadcast both transactions. If the broadcast is successful, the payment can be considered ZCE-secured.
-
 ### ZCE Relay & Mining Policies
 
 To be considered **ZCE-ready**, node software must implement specialized transaction relay/mining policies for ZCE-secured transactions.
@@ -898,13 +896,34 @@ To be considered **ZCE-ready**, node software must implement specialized transac
 
 ### Accepting ZCE-Secured Payments
 
-ZCE-Secured Transactions offer instant, incentive-secure finality.
+ZCE-secured transactions offer instant, incentive-secure payment finality.
 
-To accept ZCE-Secured Transactions, payees should monitor the network using a fully-validating node. While ZCEs eliminate the need to delay purchases to [monitor the network for conflicting transactions](#transaction-conflict-monitoring), if the monitoring node has already received a transaction which conflicts with a ZCE-secured transaction at the time of payment, the purchase must be delayed until one of the transactions is confirmed<sup>1</sup>. (Note, any conflict with a ZCE-secured transaction implies deliberate fraud, so other fraud-mitigation measures may also be appropriate.)
+To accept ZCE-secured transactions, businesses should monitor the network using a fully-validating node. While ZCEs eliminate the need to delay purchases to [monitor the network for conflicting transactions](#transaction-conflict-monitoring), if the monitoring node has already received a transaction which conflicts with a ZCE-secured transaction at the time of payment, the purchase must be delayed until one of the transactions is confirmed<sup>1</sup>. (Note, any conflict with a ZCE-secured transaction implies deliberate, attempted fraud.)
 
-When setting an [`instantAcceptanceEscrow`](#payment-request) value, payees should require an escrow value which is **at least equal to the payment amount**. Payees experiencing ZCE fraud (i.e. a well-funded adversary willing to lose funds equal or greater than the funds lost by the payee) may choose to set `instantAcceptanceEscrow` to a value larger than 100% of the payment.
+ZCE-secured transactions should be accepted using the [ZCE Extension to the JSON Payment Protocol](#zce-extension-to-json-payment-protocol-v2).
 
-<small>1. Even if the conflicting transaction was broadcasted less than 5 seconds before the ZCE-secured transaction was received, it cannot be guaranteed that the entire network will hear the ZCE-secured transaction in time to replace the conflicting transaction, and the double-spend may be successful.</small>
+When setting an [`instantAcceptanceEscrow`](#payment-request) value, businesses should require an escrow value which is **at least equal to the payment amount**. Businesses with exceptional vandalism risk (i.e. well-funded adversaries willing to burn funds to vandalize the business<sup>2</sup>) should set `instantAcceptanceEscrow` to a value larger than 100% of the payment.
+
+Upon receipt of the [`Payment` message](#payment), the payee must:
+
+1. Validate `escrowReclaimTx`:
+   1. at least one input must spend the ZCE output of the ZCE-secured transaction, and
+   2. the redeem bytecode must match the expected ZCE contract for the ZCE-secured transaction's input count.
+   3. Extract the `reclaim` public key from the ZCE input.
+2. Validate the ZCE-secured transaction:
+   1. Validate that all inputs meet the requirements of [ZCE-Secured Transaction Inputs](#zce-secured-transaction-inputs).
+   2. Construct the expected [`ZCE Root Hash`](#zce-root-hash) given all input public keys.
+   3. Given the `reclaim` public key found in the `escrowReclaimTx`, the expected `ZCE Root Hash`, confirm the ZCE output pays to the expected P2SH contract (using the minimum-sized ZCE contract for the transaction's input count).
+3. Attempt to broadcast both transactions.
+
+If the broadcast is successful, the payment can be considered ZCE-secured.
+
+<small>
+
+1. Even if the conflicting transaction were broadcasted less than 5 seconds before the ZCE-secured transaction was received, it could not be guaranteed that the entire network would hear the ZCE-secured transaction in time to replace the conflicting transaction, and the double-spend could be successful. As such, payees should not ignore this attempted fraud.
+2. While ZCEs [generally prevent attackers from profiting](#full-value-escrow-requirement) via zero-confirmation fraud, a well-funded attacker can vandalize a business by simultaneously broadcasting a conflicting ZCE-secured transaction – paying back to the attacker – with an equal or greater escrow value than the transaction sent to the business. This attack is guaranteed to lose the attacker at least the value of the payment (due to miners claiming the ZCE), and may be detected by the business before the double-spent payment is honored (the attack can always be [detected within 5 seconds](#monitoring-for-replacement-transactions)). The attack also risks a 200% loss to the attacker if a miner ultimately accepts the legitimate transaction (in which case, the business still receives their expected payment).
+
+</small>
 
 ## Rationale
 
@@ -944,7 +963,7 @@ For example: an attacker makes a $5 purchase which is secured by a $5 ZCE. Withi
 
 After 5 seconds, when ZCE replacement over the network is no longer possible, the maximum cost of fraud to the attacker rises to $10 (the original payment + ZCE) – while fraud-as-a-service mining pools could offer a chance at a discount from the $5 payment, the attacker always risks $10 by sharing a double spend with a mining pool.
 
-This property offers another simple strategy for improving ZCE transaction security: payees could monitor the network for ~5 seconds prior to releasing goods, ensuring attackers are always forced to pay or risk the higher cost. This mode is excluded from the specification because it re-introduces a waiting period for users, harming user experience. Security is likely better improved by increasing `instantAcceptanceEscrow`, but some rare use cases may both require additional security and find the additional delay preferable to increasing escrow values.
+This property offers another simple strategy for improving ZCE transaction security: payees could monitor the network for ~5 seconds prior to releasing goods, ensuring attackers are always forced to pay the higher cost. This mode is excluded from the specification because it re-introduces a waiting period for users, harming user experience. Security is likely better improved by increasing `instantAcceptanceEscrow`, but some rare use cases may both require additional security and find the additional delay preferable to increasing escrow values.
 
 ### Limitation on Immediate Reuse of Escrowed Funds
 
@@ -956,17 +975,33 @@ While the ZCE protocol could be extended to allow for immediate reuse of escrowe
 
 In practice, this limitation is both simple and unlikely to impact regular usage: up to half of the confirmed funds in a wallet can be used for any number of ZCE-secured transactions within a single block period (~10 minutes), and the other half always remains immediately spendable in non-ZCE-secured transactions.
 
-### Future Upgrade: Eliminating One-UTXO-Per-Address Limitation
+## Areas for Research
+
+The following topics have been excluded from this specification pending further research and development. Future specifications may incorporate these features.
+
+### Eliminating One-UTXO-Per-Address Limitation
 
 ZCE-secured transactions can only safely spend [one UTXO per address](#wallet-utxo-selection). Because the [signing serialization algorithm](https://github.com/bitcoincashorg/bitcoincash.org/blob/3e2e6da8c38dab7ba12149d327bc4b259aaad684/spec/replay-protected-sighash.md) produces a different preimage for each transaction input, if multiple inputs share a public key, the ZCE can be claimed using only the signatures present in the ZCE-secured transaction's inputs.
 
 If a future upgrade enables [PMv3's Detached Signatures](https://github.com/bitjson/pmv3#detached-signatures), this ZCE limitation can be eliminated: a wallet could include any number of UTXOs which share the same public key, and all UTXOs can be unlocked using a single detached signature.
 
-### Future Upgrade: Reducing ZCE Overhead
+### Reducing ZCE Overhead
 
 In normal operation, between [63 and 177 bytes of the ZCE protocol overhead](#increased-transaction-sizes) is dedicated to sharing the unexecuted code paths of ZCE contracts (the miner claim clauses).
 
 Merklized Abstract Syntax Trees ([MAST](https://bitcoinops.org/en/topics/mast/)), [Taproot on BCH](https://gist.github.com/markblundeberg/94650e69ebf056215de6ad1a716de559), or other similar upgrades would allow this overhead to be removed from normal operation, reducing average overhead from ~295 bytes to ~217 bytes.
+
+### Miner Enforcement of ZCE Security
+
+As specified, ZCE-secured transactions remain vulnerable to [some types of miner collusion](#full-value-escrow-requirement) (with a probability of success equal to the colluding miner's portion of network hash power).
+
+If a notable "fraud-as-a-service" miner were ever detected on the network, an additional mining policy could be implemented to solidify ZCE security: miners could ignore blocks which fail to claim sufficiently-aged ZCEs beyond some limit.
+
+Because all miners are expected to eventually hear all transactions, blocks which fail to claim a significant sum of value from ZCEs of sufficient age can be assumed to originate from a miner engaged in zero-confirmation payment fraud. (A miner forgoing significant on-chain profits indicates that they are being payed a larger sum off-chain to modify their behavior.)
+
+To ameliorate this fraud, honest miners can profitably provide a valuable service: ignore the offending block, claiming the ZCEs themselves in the next block. If all honest miners expect this behavior (and reasonable timing and value limits are established), the network can be expected to successfully drop the offending transactions.
+
+The other miners can expect to make a profit at the fraudsters' expense, and **any users who were defrauded will automatically receive the payment they originally expected**.
 
 ## Implementations
 
@@ -985,7 +1020,7 @@ No alternative proposals are currently active, but several past proposals have i
 
 Other potential alternatives which have been proposed for networks like Bitcoin Cash include:
 
-- [Lightning Network](https://en.wikipedia.org/wiki/Lightning_Network) – a payment channel network which offers similar finality as ZCEs (but requires previous setup transactions, channel liquidity between payer and payee, and a constantly-online service to monitor for fraud).
+- [Lightning Network](https://en.wikipedia.org/wiki/Lightning_Network) – a payment channel network which offers similar finality as ZCE-secured transactions (but requires previous setup transactions, channel liquidity between payer and payee, and a constantly-online service to monitor for fraud).
 - [Avalanche](https://www.avalabs.org/whitepapers) – a secondary consensus layer in which a set of recent miners settles disputes between conflicting transactions. (Though no public proposal exists for applying the Avalanche protocol to a bitcoin-like Proof-of-Work network.)
 
 ## Stakeholders & Statements
