@@ -998,7 +998,7 @@ As specified, ZCE-secured transactions remain vulnerable to [some types of miner
 
 If a notable "fraud-as-a-service" miner were ever detected on the network, an additional mining policy could be implemented to solidify ZCE security: miners could ignore blocks which fail to claim sufficiently-aged ZCEs beyond some limit.
 
-Because all miners are expected to eventually hear all transactions, blocks which fail to claim a significant sum of value from ZCEs of sufficient age can be assumed to originate from a miner engaged in zero-confirmation payment fraud. (A miner forgoing significant on-chain profits indicates that they are being payed a larger sum off-chain to modify their behavior.)
+Because all miners are expected to eventually hear all transactions, blocks which fail to claim a significant sum of value from ZCEs of sufficient age can be assumed to originate from a miner engaged in zero-confirmation payment fraud. (A miner forgoing significant on-chain profits indicates that they are being paid a larger sum off-chain to modify their behavior.)
 
 To ameliorate this fraud, honest miners can profitably provide a valuable service: ignore the offending block, claiming the ZCEs themselves in the next block. If all honest miners expect this behavior (and reasonable timing and value limits are established), the network can be expected to successfully drop the offending transactions.
 
