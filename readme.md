@@ -1033,13 +1033,13 @@ _(TODO, pull requests welcome)_
 
 ## Feedback & Reviews
 
-- [`CHIP 2021-06 Zero-Confirmation Escrows` - Bitcoin Cash Research](https://bitcoincashresearch.org/t/)
+- [`CHIP 2021-06 Zero-Confirmation Escrows` - Bitcoin Cash Research](https://bitcoincashresearch.org/t/chip-2021-08-zces-zero-confirmation-escrows/537)
 
 ## Changelog
 
 This section summarizes the evolution of this document.
 
-- **v1.0.0 – 2021-8-18** ([`053927b5`](https://github.com/bitjson/bch-zce/blob/053927b57b5c7fe9f70e2dd77242e84c507d3502/readme.md))
+- **v1.0.0 – 2021-8-18** ([`3a57dba9`](https://github.com/bitjson/bch-zce/blob/3a57dba9693b0a64ca5bbf168b39527dfbcdbb93/readme.md))
   - Initial publication
 
 ## Copyright
