@@ -1011,7 +1011,8 @@ The other miners can expect to make a profit at the fraudsters' expense, and **a
 
 Please see the following reference implementations for additional examples and test vectors:
 
-- [Bitcore PR #3240 - ZCE](https://github.com/bitpay/bitcore/pull/3240)
+- [Bitcore PR #3240 - Zero-Confirmation Escrows](https://github.com/bitpay/bitcore/pull/3240)
+- [BitPay Wallet PR #11838 - Zero-Confirmation Escrows](https://github.com/bitpay/wallet/pull/11838)
 
 **_(seeking contributors for node implementation patches)_**
 
