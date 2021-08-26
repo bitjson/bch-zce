@@ -5,9 +5,9 @@
         Layer: Peer Services
         Authors: Jason Dreyzehner, Marty Alcala
         Status: Draft
-        Specification Version: 1.0.0
+        Specification Version: 1.0.1
         Initial Publication Date: 2021-08-18
-        Latest Revision Date: 2021-08-18
+        Latest Revision Date: 2021-08-26
 
 ## Summary
 
@@ -777,7 +777,9 @@ A **ZCE-Secured Transaction** adheres to the following validation requirements:
 
 1. All transaction inputs are [ZCE-Secured Transaction Inputs](#zce-secured-transaction-inputs).
 2. At least one output pays to the required P2SH ZCE contract:
-   1. The correct [ZCE Root Hash](#zce-root-hash) is used, including the public key of every transaction input.
+   1. The correct [ZCE Root Hash](#zce-root-hash) is used, including all required public keys:
+      1. The public key of every transaction input in this ZCE-secured transaction, and
+      2. The public key of every transaction input in any unconfirmed, parent ZCE-secured transactions used to fund this ZCE-secured transaction. (This occurs for [chained ZCE-secured transactions](#chaining-zce-secured-transactions)).
    2. The minimum key-count ZCE contract is used for the total count of public keys covered.
    3. The ZCE output has a value greater than or equal to the transaction's mining fee.
 
@@ -801,13 +803,15 @@ Wallets creating ZCE-secured transactions must implement the following UTXO sele
 3. All selected UTXOs must be either:
    1. confirmed (included in a block), or
    2. an output of a previous ZCE-secured transaction in which the ZCE output met the minimum escrow requirement of the current transaction.
-4. The combined value of all selected UTXOs must cover the payment amount, the `instantAcceptanceEscrow` value, and double the required miner fee<sup>3</sup>.
+4. The combined value of all selected UTXOs must cover the payment amount, the `instantAcceptanceEscrow` value, and double the minimum required miner fee<sup>3</sup>.
+
+**It is recommended that wallets avoid using public keys (e.g. from [hierarchical-deterministic wallets](https://github.com/bitcoin/bips/blob/61ccc84930051e5b4a99926510d0db4a8475a4e6/bip-0032.mediawiki)) which may be in use by other wallet clients or on other cryptocurrency networks**. Any historical or concurrent usage of a public key covered by a ZCE output will allow miners to claim the escrowed funds.
 
 <small>
 
 1. The ZCE contract allows anyone (typically, the miner) to spend the ZCE output if they can prove two different messages have been signed by the same public key. If a ZCE includes two UTXOs which pay to the same public key hash (A.K.A. address), the ZCE can be immediately claimed using only the signatures provided in the transaction's inputs. ([Future upgrades](#eliminating-one-utxo-per-address-limitation) could enable ZCEs to safely use multiple UTXOs per address.)
 2. This prevents the ZCE from being inadvertently lost by broadcasting later transactions with signatures which also match the ZCE's miner claim criteria. Additionally, because ZCEs offer bounties for miners which are often much larger than typical transaction fees, at least 11 confirmations are necessary to avoid incentivizing blockchain rewrites: if a large enough volume of ZCE-secured transactions have had their miner claim criteria quickly revealed, it can become profitable for miners to attempt deep block reorganizations to claim ZCEs. This window of opportunity closes after the 10-block rolling checkpoint is reached, preventing deep block-reorganizations from being accepted by the network.
-3. To fulfill a payment request's [`instantAcceptanceEscrow` requirement](#payment-request), the ZCE output must be greater than or equal to the `instantAcceptanceEscrow` value in satoshis plus the transaction's miner fee.
+3. To fulfill a payment request's [`instantAcceptanceEscrow` requirement](#payment-request), the ZCE output must be greater than or equal to the `instantAcceptanceEscrow` value in satoshis plus the transaction's minimum required miner fee.
 
 </small>
 
@@ -844,13 +848,13 @@ In the BCH response to [Payment Requests](https://github.com/bitpay/jsonPaymentP
 }
 ```
 
-To fulfill the `instantAcceptanceEscrow` requirement, the wallet must construct a ZCE-secured transaction in which the value of the ZCE output is at least the value of **`instantAcceptanceEscrow` in satoshis plus the transaction's miner fee**. For example, to pay a request with an `instantAcceptanceEscrow` of `193300` with a 300 byte ZCE-secured transaction (at a fee rate of 1 satoshi/byte), the ZCE output must be at least `193600`.
+To fulfill the `instantAcceptanceEscrow` requirement, the wallet must construct a ZCE-secured transaction in which the value of the ZCE output is at least the value of **`instantAcceptanceEscrow` in satoshis plus the transaction's minimum required miner fee**. For example, to pay a request with an `instantAcceptanceEscrow` of `193300` with a 300 byte ZCE-secured transaction (at a minimum required fee rate of 1 satoshi/byte), the ZCE output must be at least `193600`.
 
-> Note, a ZCE output value of only `instantAcceptanceEscrow` in satoshis cannot be safely accepted due to relay rules: if a previously broadcasted ZCE-secured transaction conflicts with the ZCE-secured transaction sent to the payee, the transaction sent to the payee would not be accepted by the network as a valid replacement. The ZCE output value must be at least `instantAcceptanceEscrow` plus the transaction's miner fee to guarantee network acceptance.
+> Note, a ZCE output value of only `instantAcceptanceEscrow` in satoshis cannot be safely accepted due to relay rules: if a previously broadcasted ZCE-secured transaction conflicts with the ZCE-secured transaction sent to the payee, the transaction sent to the payee would not be accepted by the network as a valid replacement. The ZCE output value must be at least `instantAcceptanceEscrow` plus the transaction's minimum required miner fee to guarantee network acceptance.
 
 ##### Chaining ZCE-Secured Transactions
 
-Additionally, if P2PKH outputs of previous ZCE-secured transactions are used to fund the transaction fulfilling this payment request, **each funding ZCE-secured transaction must have used a ZCE output value greater than or equal to the value of `instantAcceptanceEscrow` in satoshis plus the fulfilling transaction's miner fee**.
+Additionally, if P2PKH outputs of previous ZCE-secured transactions are used to fund the transaction fulfilling this payment request, **each funding ZCE-secured transaction must have used a ZCE output value greater than or equal to the value of `instantAcceptanceEscrow` in satoshis plus the fulfilling transaction's minimum required miner fee**.
 
 #### Payment
 
@@ -1040,6 +1044,9 @@ _(TODO, pull requests welcome)_
 
 This section summarizes the evolution of this document.
 
+- **v1.0.1 - 2021-8-26** (current)
+  - Require parent public keys in chained, ZCE-secured transactions ([#14](https://github.com/bitjson/bch-zce/issues/14))
+  - Highlight risks of concurrent public key usage ([#11](https://github.com/bitjson/bch-zce/issues/11))
 - **v1.0.0 – 2021-8-18** ([`3a57dba9`](https://github.com/bitjson/bch-zce/blob/3a57dba9693b0a64ca5bbf168b39527dfbcdbb93/readme.md))
   - Initial publication
 
